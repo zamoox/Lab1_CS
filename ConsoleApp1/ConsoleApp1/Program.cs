@@ -12,7 +12,8 @@ namespace ConsoleApp1
 
         static void Main(string[] args)
         {
-            string path = @"C:\Users\zamoo\Desktop\Projects\labake_1\Text1.txt";
+            string path = @"C:\Users\zamoo\Desktop\Projects\labake_1\Text3.txt";
+            FileInfo file = new FileInfo(path);
 
             if (!File.Exists(path))
             {
@@ -51,46 +52,38 @@ namespace ConsoleApp1
             return Math.Round(CountOccurences(symbol, text) / text.Length, 3);
         }
 
-        public static double CountEntropy(string text)
-        {
-            
-            double entropy = 0;
-
-            for (int i = 97; i < 122; i++)
-            {
-                string symbol = Char.ConvertFromUtf32(i);
-                double prob = CountProbability(symbol, text);
-                Console.WriteLine(symbol + " " + prob);
-                if (prob != 0)
-                {
-                    entropy += prob * Math.Log(2, 1 / prob);
-                }
-            }
-            Console.WriteLine("Entropy: {0}", entropy);
-            return entropy;
-        }
-
         public static double CountInformationAmount(string text)
         {
-            double entropy = CountEntropy(text);
+            double entropy = ShannonEntropy(text);
             Console.WriteLine("InformationAmount: {0}", entropy * text.Length);
             return entropy * text.Length / 8;
         }
 
-        public static int Entropy(this string s)
+        public static double ShannonEntropy(string s)
         {
-            var d = new Dictionary<char, bool>();
+            var map = new Dictionary<char, int>();
             foreach (char c in s)
-                if (!d.ContainsKey(c)) d.Add(c, true);
-            return d.Count();
-        }
+            {
+                if (!map.ContainsKey(c))
+                {
+                    map.Add(c, 1);
+                }
+                else
+                {
+                    map[c] += 1;
+                }
+            }
 
-        public static int getEntropy(this string s)
-        {
-            var hs = new HashSet<char>();
-            foreach (char c in s)
-                hs.Add(c);
-            return hs.Count();
+            int len = s.Length;
+            double result = 0D;
+            foreach (var item in map.Values)
+            {
+                var frequency = (double)item / len;
+                result -= frequency * Math.Log(frequency);
+            }
+            result /= Math.Log(2);
+
+            return result;
         }
 
         public static void ShowTable(string text)
@@ -98,7 +91,6 @@ namespace ConsoleApp1
             Console.OutputEncoding = Encoding.UTF8;
 
             double oc = 0;
-            double entropy = 0;
             double prob;
             double infoAmount;
 
@@ -118,21 +110,17 @@ namespace ConsoleApp1
 
                 prob = oc / text.Length;
 
-                if (prob != 0)
-                {
-                    entropy += -(prob * Math.Log(2, prob));
-                }
-                else continue;
+                if (prob == 0) continue;
 
                 Console.WriteLine("Символ {0} зустрічається {1} разів з імовірністю {2:f5};", chars[i], oc, prob);
                 oc = 0;
             }
             
-            infoAmount = entropy * text.Length / 8;
+            infoAmount = ShannonEntropy(text) * text.Length / 8;
 
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("Ентропія: {0:f4}", entropy);
-            Console.WriteLine("Кількість інформації: {0:f4} байтів; Розмір файлу: {1} байтів;", infoAmount, new FileInfo(@"C:\Users\zamoo\Desktop\Projects\labake_1\Text1.txt").Length);
+            Console.WriteLine("Ентропія: {0:f4}", ShannonEntropy(text));
+            Console.WriteLine("Кількість інформації: {0:f4} байтів; Розмір файлу: {1} байтів;", infoAmount, new FileInfo(@"C:\Users\zamoo\Desktop\Projects\labake_1\Text3.txt").Length);
             Console.ResetColor(); 
         }
 
